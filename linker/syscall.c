@@ -5,17 +5,19 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <limits.h>
+#include <sys/signal.h>
 #include "util.h"
 
 #define SYS_write 64
 //#define SYS_exit 93    // no need
 //#define SYS_stats 1234  // no need 
 
+#undef strcmp
 extern volatile uint64_t tohost;
 extern volatile uint64_t fromhost;
 
 // change name to syscall
-static uintptr_t handle_frontend_syscall(uintptr_t which, uint64_t arg0, uint64_t arg1, uint64_t arg2)
+static uintptr_t syscall(uintptr_t which, uint64_t arg0, uint64_t arg1, uint64_t arg2)
 {
   volatile uint64_t magic_mem[8] __attribute__((aligned(64)));
   magic_mem[0] = which;
@@ -25,8 +27,7 @@ static uintptr_t handle_frontend_syscall(uintptr_t which, uint64_t arg0, uint64_
   __sync_synchronize();
 
   tohost = (uintptr_t)magic_mem;
-  while (fromhost == 0)
-    ;
+  while (fromhost == 0);
   fromhost = 0;
 
   __sync_synchronize();
@@ -97,6 +98,11 @@ void exit(int code)
 //   while (1);
 }
 
+void abort()
+{
+  exit(128 + SIGABRT);
+}
+
 // no need
 // void setStats(int enable)
 // {
@@ -118,7 +124,7 @@ void __attribute__((weak)) thread_entry(int cid, int nc)
 int __attribute__((weak)) main(int argc, char** argv)
 {
   // single-threaded programs override this function.
-  printstr("Implement main(), foo!\n");  // no need
+  // printstr("Implement main(), foo!\n");  // no need
   return -1;
 }
 
@@ -128,12 +134,10 @@ static void init_tls()
   extern char _tls_data;
   extern __thread char _tdata_begin, _tdata_end, _tbss_end;
   size_t tdata_size = &_tdata_end - &_tdata_begin;
-  // add below 
-  /*
+  
   asm valatile("mv %0, tp"
        : "=r"(thread_pointer)
        );
-  */
   memcpy(thread_pointer, &_tls_data, tdata_size);
   size_t tbss_size = &_tbss_end - &_tdata_end;
   memset(thread_pointer + tdata_size, 0, tbss_size);
@@ -147,7 +151,7 @@ void _init(int cid, int nc)
   // only single-threaded programs should ever get here.
   int ret = main(0, 0);
 
-  // add #ifdef DEBUG
+#ifdef DEBUG
   char buf[NUM_COUNTERS * 32] __attribute__((aligned(64)));
   char* pbuf = buf;
   for (int i = 0; i < NUM_COUNTERS; i++)
@@ -155,7 +159,7 @@ void _init(int cid, int nc)
       pbuf += sprintf(pbuf, "%s = %d\n", counter_names[i], counters[i]);
   if (pbuf != buf)
     printstr(buf);
-// add #endif
+#endif
   exit(ret);
 }
 
