@@ -215,6 +215,27 @@ static inline void printnum(void (*putch)(int, void**), void **putdat,
     putch(digs[pos] + (digs[pos] >= 10 ? 'a' - 10 : '0'), putdat);
 }
 
+static inline void printuppernum(void (*putch)(int, void**), void **putdat,
+                    unsigned long long num, unsigned base, int width, int padc)
+{
+  unsigned digs[sizeof(num)*CHAR_BIT];
+  int pos = 0;
+
+  while (1)
+  {
+    digs[pos++] = num % base;
+    if (num < base)
+      break;
+    num /= base;
+  }
+
+  while (width-- > pos)
+    putch(padc, putdat);
+
+  while (pos-- > 0)
+    putch(digs[pos] + (digs[pos] >= 10 ? 'A' - 10 : '0'), putdat);
+}
+
 static unsigned long long getuint(va_list *ap, int lflag)
 {
   if (lflag >= 2)
@@ -370,6 +391,14 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
       num = getuint(&ap, lflag);
     signed_number:
       printnum(putch, putdat, num, base, width, padc);
+      break;
+    
+    case 'X':
+      base = 16;
+    unsigned_number:
+      num = getuint(&ap, lflag);
+    signed_number:
+      printuppernum(putch, putdat, num, base, width, padc);
       break;
 
     // escaped '%' character

@@ -1,6 +1,6 @@
 # See LICENSE for license details.
 
-#include "riscv/encoding.h"
+#include "../riscv/encoding.h"
 
 #if __riscv_xlen == 64
 # define LREG ld
