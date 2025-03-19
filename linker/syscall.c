@@ -135,7 +135,7 @@ static void init_tls()
   extern __thread char _tdata_begin, _tdata_end, _tbss_end;
   size_t tdata_size = &_tdata_end - &_tdata_begin;
   
-  asm valatile("mv %0, tp"
+  asm volatile("mv %0, tp"
        : "=r"(thread_pointer)
        );
   memcpy(thread_pointer, &_tls_data, tdata_size);
@@ -393,13 +393,13 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
       printnum(putch, putdat, num, base, width, padc);
       break;
     
-    case 'X':
-      base = 16;
-    unsigned_number:
-      num = getuint(&ap, lflag);
-    signed_number:
-      printuppernum(putch, putdat, num, base, width, padc);
-      break;
+    // case 'X':
+    //   base = 16;
+    // unsigned_number:
+    //   num = getuint(&ap, lflag);
+    // signed_number:
+    //   printuppernum(putch, putdat, num, base, width, padc);
+    //   break;
 
     // escaped '%' character
     case '%':
