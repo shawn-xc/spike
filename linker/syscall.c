@@ -426,18 +426,18 @@ int printf(const char* fmt, ...)
   return 0; // incorrect return value, but who cares, anyway?
 }
 
+void sprintf_putch(int ch, void** data)
+{
+    char** pstr = (char**)data;
+    **pstr = ch;
+    (*pstr)++;
+}
+
 int sprintf(char* str, const char* fmt, ...)
 {
   va_list ap;
   char* str0 = str;
   va_start(ap, fmt);
-
-  void sprintf_putch(int ch, void** data)
-  {
-    char** pstr = (char**)data;
-    **pstr = ch;
-    (*pstr)++;
-  }
 
   vprintfmt(sprintf_putch, (void**)&str, fmt, ap);
   *str = 0;
@@ -538,10 +538,10 @@ long atol(const char* str)
   return sign ? -res : res;
 }
 
-int get_nharts()
-{
-  const char* config_string = *((const char**) CONFIG_STRING_ADDR);
+// int get_nharts()
+// {
+//   const char* config_string = *((const char**) CONFIG_STRING_ADDR);
 
-  return amf_ntiles(config_string);
-}
+//   return amf_ntiles(config_string);
+// }
 
